@@ -91,7 +91,14 @@ final class ParseUtil {
         if ("null".equals(dateStr) || null == dateStr) {
             return null;
         } else {
-            return getDate(dateStr, format);
+            switch (dateStr.length()) {
+                case 10:
+                    return new Date(Long.parseLong(dateStr) * 1000);
+                case 24:
+                    return javax.xml.bind.DatatypeConverter.parseDateTime(dateStr).getTime();
+                default:
+                    return getDate(dateStr, format);
+            }
         }
     }
 

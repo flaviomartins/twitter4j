@@ -50,9 +50,14 @@ package twitter4j;
 
     private void init(JSONObject json) throws TwitterException {
         try {
-            JSONArray indicesArray = json.getJSONArray("indices");
-            setStart(indicesArray.getInt(0));
-            setEnd(indicesArray.getInt(1));
+            if (!json.isNull("indices")) {
+                JSONArray indicesArray = json.getJSONArray("indices");
+                setStart(indicesArray.getInt(0));
+                setEnd(indicesArray.getInt(1));
+            } else {
+                setStart(json.getInt("start"));
+                setEnd(json.getInt("end"));
+            }
 
             if (!json.isNull("url")) {
                 this.url = json.getString("url");

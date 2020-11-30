@@ -49,15 +49,23 @@ package twitter4j;
 
     private void init(JSONObject json) throws TwitterException {
         try {
-            JSONArray indicesArray = json.getJSONArray("indices");
-            setStart(indicesArray.getInt(0));
-            setEnd(indicesArray.getInt(1));
+            if (!json.isNull("indices")) {
+                JSONArray indicesArray = json.getJSONArray("indices");
+                setStart(indicesArray.getInt(0));
+                setEnd(indicesArray.getInt(1));
+            } else {
+                setStart(json.getInt("start"));
+                setEnd(json.getInt("end"));
+            }
 
             if (!json.isNull("name")) {
                 this.name = json.getString("name");
             }
             if (!json.isNull("screen_name")) {
                 this.screenName = json.getString("screen_name");
+            }
+            if (!json.isNull("username")) {
+                this.screenName = json.getString("username");
             }
             id = ParseUtil.getLong("id", json);
         } catch (JSONException jsone) {

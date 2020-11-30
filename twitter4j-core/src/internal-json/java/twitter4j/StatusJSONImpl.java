@@ -97,6 +97,14 @@ import static twitter4j.ParseUtil.getDate;
     }
 
     private void init(JSONObject json) throws TwitterException {
+        if (!json.isNull("data")) {
+            initv2(json);
+        } else {
+            initv1(json);
+        }
+    }
+
+    private void initv1(JSONObject json) throws TwitterException {
         id = ParseUtil.getLong("id", json);
         source = ParseUtil.getUnescapedString("source", json);
         createdAt = getDate("created_at", json);
@@ -184,6 +192,69 @@ import static twitter4j.ParseUtil.getDate;
             }
             if (!json.isNull("withheld_in_countries")){
                 JSONArray withheld_in_countries = json.getJSONArray("withheld_in_countries");
+                int length = withheld_in_countries.length();
+                withheldInCountries = new String[length];
+                for (int i = 0 ; i < length; i ++) {
+                    withheldInCountries[i] = withheld_in_countries.getString(i);
+                }
+            }
+        } catch (JSONException jsone) {
+            throw new TwitterException(jsone);
+        }
+    }
+
+    private void initv2(JSONObject jsonv2) throws TwitterException {
+        JSONObject data = jsonv2.getJSONObject("data");
+        id = ParseUtil.getLong("id", data);
+        source = ParseUtil.getUnescapedString("source", data);
+        createdAt = getDate("created_at", data);
+        inReplyToUserId = ParseUtil.getLong("in_reply_to_user_id", data);
+        isPossiblySensitive = ParseUtil.getBoolean("possibly_sensitive", data);
+        try {
+            if (!data.isNull("public_metrics")) {
+                isFavorited = ParseUtil.getBoolean("like_count", data);
+                isRetweeted = ParseUtil.getBoolean("retweet_count", data);
+                retweetCount = ParseUtil.getLong("retweet_count", data);
+                favoriteCount = ParseUtil.getInt("like_count", data);
+            }
+
+            if (!jsonv2.isNull("includes")) {
+                JSONObject includes = jsonv2.getJSONObject("includes");
+                if (!includes.isNull("users")) {
+                    user = new UserJSONImpl(includes.getJSONArray("users").getJSONObject(0));
+                }
+            }
+
+            if (!data.isNull("referenced_tweets")) {
+                JSONArray referencedTweetsArray = data.getJSONArray("referenced_tweets");
+                for (int i = 0; i < referencedTweetsArray.length(); i++) {
+                    JSONObject referencedTweet = referencedTweetsArray.getJSONObject(i);
+                    if ("replied_to".equals(referencedTweet.getString("type"))) {
+                        inReplyToStatusId = referencedTweet.getLong("id");
+                    } else if ("quoted".equals(referencedTweet.getString("type"))) {
+                        quotedStatusId = referencedTweet.getLong("id");
+                    }
+                }
+            }
+
+            collectEntities(data);
+
+            userMentionEntities = userMentionEntities == null ? new UserMentionEntity[0] : userMentionEntities;
+            urlEntities = urlEntities == null ? new URLEntity[0] : urlEntities;
+            hashtagEntities = hashtagEntities == null ? new HashtagEntity[0] : hashtagEntities;
+            symbolEntities = symbolEntities == null ? new SymbolEntity[0] : symbolEntities;
+            mediaEntities = mediaEntities == null ? new MediaEntity[0] : mediaEntities;
+            if (!data.isNull("text")) {
+                text = HTMLEntity.unescapeAndSlideEntityIncdices(data.getString("text"), userMentionEntities,
+                        urlEntities, hashtagEntities, mediaEntities);
+            }
+
+            if (!data.isNull("lang")) {
+                lang = ParseUtil.getUnescapedString("lang", data);
+            }
+
+            if (!data.isNull("withheld_in_countries")){
+                JSONArray withheld_in_countries = data.getJSONArray("withheld_in_countries");
                 int length = withheld_in_countries.length();
                 withheldInCountries = new String[length];
                 for (int i = 0 ; i < length; i ++) {

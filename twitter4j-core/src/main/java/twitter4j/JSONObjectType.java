@@ -72,6 +72,15 @@ public final class JSONObjectType {
         // This code originally lived in AbstractStreamImplementation.
         // I've moved it in here to expose it as a public encapsulation of
         // the object type determination logic.
+
+        // Twitter API v2 data
+        if (!json.isNull("data")) {
+            JSONObject data = json.getJSONObject("data");
+            if (!data.isNull("text")) {
+                return Type.STATUS;
+            }
+        }
+
         if (!json.isNull("sender")) {
             return Type.SENDER;
         } else if (!json.isNull("text")) {

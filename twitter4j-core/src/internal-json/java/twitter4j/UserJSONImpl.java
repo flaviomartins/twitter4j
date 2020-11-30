@@ -96,6 +96,14 @@ import java.util.Date;
     }
 
     private void init(JSONObject json) throws TwitterException {
+        if (!json.isNull("username")) {
+            initv2(json);
+        } else {
+            initv1(json);
+        }
+    }
+
+    private void initv1(JSONObject json) throws TwitterException {
         try {
             id = ParseUtil.getLong("id", json);
             name = ParseUtil.getRawString("name", json);
@@ -154,6 +162,54 @@ import java.util.Date;
                 JSONObject statusJSON = json.getJSONObject("status");
                 status = new StatusJSONImpl(statusJSON);
             }
+            if (!json.isNull("withheld_in_countries")) {
+                JSONArray withheld_in_countries = json.getJSONArray("withheld_in_countries");
+                int length = withheld_in_countries.length();
+                withheldInCountries = new String[length];
+                for (int i = 0 ; i < length; i ++) {
+                    withheldInCountries[i] = withheld_in_countries.getString(i);
+                }
+            }
+        } catch (JSONException jsone) {
+            throw new TwitterException(jsone.getMessage() + ":" + json.toString(), jsone);
+        }
+    }
+
+    private void initv2(JSONObject json) throws TwitterException {
+        try {
+            id = ParseUtil.getLong("id", json);
+            name = ParseUtil.getRawString("name", json);
+            email = ParseUtil.getRawString("email", json);
+            screenName = ParseUtil.getRawString("username", json);
+            location = ParseUtil.getRawString("location", json);
+
+            // descriptionUrlEntities <=> entities/descriptions/urls[]
+            descriptionURLEntities = getURLEntitiesFromJSON(json, "description");
+
+            // urlEntity <=> entities/url/urls[]
+            URLEntity[] urlEntities = getURLEntitiesFromJSON(json, "url");
+            if (urlEntities.length > 0) {
+                urlEntity = urlEntities[0];
+            }
+
+            description = ParseUtil.getRawString("description", json);
+            if (description != null) {
+                description = HTMLEntity.unescapeAndSlideEntityIncdices(description,
+                        null, descriptionURLEntities, null, null);
+            }
+
+            profileImageUrl = ParseUtil.getRawString("profile_image_url", json);
+            url = ParseUtil.getRawString("url", json);
+            isVerified = ParseUtil.getBoolean("verified", json);
+
+            if (!json.isNull("public_metrics")) {
+                followersCount = ParseUtil.getInt("followers_count", json);
+                statusesCount = ParseUtil.getInt("tweet_count", json);
+                listedCount = ParseUtil.getInt("listed_count", json);
+            }
+
+            createdAt = ParseUtil.getDate("created_at", json, "EEE MMM dd HH:mm:ss z yyyy");
+            lang = ParseUtil.getRawString("lang", json);
             if (!json.isNull("withheld_in_countries")) {
                 JSONArray withheld_in_countries = json.getJSONArray("withheld_in_countries");
                 int length = withheld_in_countries.length();

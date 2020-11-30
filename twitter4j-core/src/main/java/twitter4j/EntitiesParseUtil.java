@@ -11,6 +11,14 @@ package twitter4j;
                 userMentionEntities[i] = new UserMentionEntityJSONImpl(userMentionsArray.getJSONObject(i));
             }
             return userMentionEntities;
+        } else if (!entities.isNull("mentions")) {
+            JSONArray userMentionsArray = entities.getJSONArray("mentions");
+            int len = userMentionsArray.length();
+            UserMentionEntity[] userMentionEntities = new UserMentionEntity[len];
+            for (int i = 0; i < len; i++) {
+                userMentionEntities[i] = new UserMentionEntityJSONImpl(userMentionsArray.getJSONObject(i));
+            }
+            return userMentionEntities;
         } else {
             return null;
         }
